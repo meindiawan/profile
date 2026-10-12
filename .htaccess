@@ -1,0 +1,27 @@
+# Arahkan semua request di root domain ke folder /public (Laravel)
+# Hasil: porfile.nluckscarves.com  (bukan porfile.nluckscarves.com/public)
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Authorization header untuk Laravel
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Blokir file/folder sensitif agar tidak bisa diakses lewat browser
+    RewriteRule ^(\.env.*|\.git.*|\.editorconfig|\.gitattributes|\.gitignore|artisan|composer\.(json|lock)|package\.json|phpunit\.xml|vite\.config\.js|install\.(sh|bat)|README.*\.md)$ - [F,L,NC]
+    RewriteRule ^(app|bootstrap|config|database|routes|storage|tests|vendor|node_modules|resources|static-site)(/|$) - [F,L,NC]
+
+    # Jika ada yang akses /public/... secara langsung, rapikan ke URL tanpa /public
+    RewriteCond %{THE_REQUEST} \s/public/ [NC]
+    RewriteRule ^public/(.*)$ /$1 [R=301,L,NC]
+
+    # File statis (css, js, img, favicon, dll) dilayani dari /public
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f
+    RewriteRule ^(.+)$ public/$1 [L]
+
+    # Selain itu, lewatkan ke front controller Laravel
+    RewriteRule ^ public/index.php [L]
+</IfModule>
